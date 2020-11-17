@@ -2,18 +2,24 @@ import 'dotenv/config';
 
 import express, { json, urlencoded } from 'express';
 import logger from 'morgan';
+import { createServer } from 'http';
 import cors from 'cors';
 import _debug from 'debug';
+import socketIO from 'socket.io';
 
 import db from './models';
-
 import indexRouter from './routes/index';
+import setupSocket from './socket';
 
 const debug = _debug('backend:server');
 
-export default function () {
-  const app = express();
+const app = express();
 
+const server = createServer(app);
+
+const io = socketIO(server);
+
+export default function () {
   /**
  * Normalize a port into a number, string, or false.
  */
@@ -69,7 +75,7 @@ export default function () {
  */
 
   function onListening () {
-    const addr = app.address();
+    const addr = server.address();
     const bind = typeof addr === 'string'
       ? 'pipe ' + addr
       : 'port ' + addr.port;
@@ -90,14 +96,16 @@ export default function () {
 
       await db.sequelize.sync();
 
+      setupSocket(io);
+
       app.use('/', indexRouter);
     },
     start () {
       const port = app.get('port');
-      app.on('error', onError);
-      app.on('listening', onListening);
+      server.on('error', onError);
+      server.on('listening', onListening);
 
-      app.listen(port, function () {
+      server.listen(port, function () {
         // eslint-disable-next-line no-console
         console.log('Express server listening on - http://localhost:' + port);
       });
