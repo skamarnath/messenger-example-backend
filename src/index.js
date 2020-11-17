@@ -3,5 +3,4 @@ import App from './app';
 
 const app = App();
 
-app.create();
-app.start();
+app.create().then(() => app.start());

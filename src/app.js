@@ -5,6 +5,8 @@ import logger from 'morgan';
 import cors from 'cors';
 import _debug from 'debug';
 
+import db from './models';
+
 import indexRouter from './routes/index';
 
 const debug = _debug('backend:server');
@@ -75,10 +77,10 @@ export default function () {
   }
 
   return {
-    create () {
+    async create () {
       // set all the server things
       app.set('env', process.env.NODE_ENV);
-      app.set('port', normalizePort(process.env.PORT) || 3000);
+      app.set('port', normalizePort(process.env.PORT) || '3000');
 
       app.use(cors());
 
@@ -86,16 +88,19 @@ export default function () {
       app.use(json());
       app.use(urlencoded({ extended: false }));
 
+      await db.sequelize.sync();
+
       app.use('/', indexRouter);
     },
     start () {
       const port = app.get('port');
+      app.on('error', onError);
+      app.on('listening', onListening);
+
       app.listen(port, function () {
         // eslint-disable-next-line no-console
         console.log('Express server listening on - http://localhost:' + port);
       });
-      app.on('error', onError);
-      app.on('listening', onListening);
     }
   };
 };
