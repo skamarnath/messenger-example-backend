@@ -7,7 +7,7 @@ import cors from 'cors';
 import _debug from 'debug';
 import socketIO from 'socket.io';
 
-import db from './models';
+import { initModels } from './models';
 import indexRouter from './routes/index';
 import setupSocket from './socket';
 
@@ -94,7 +94,12 @@ export default function () {
       app.use(json());
       app.use(urlencoded({ extended: false }));
 
-      await db.sequelize.sync();
+      try {
+        await (await initModels()).sync();
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+      }
 
       setupSocket(io);
 

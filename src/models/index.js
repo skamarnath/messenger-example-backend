@@ -1,29 +1,31 @@
 'use strict';
 
-import { readdirSync } from 'fs';
+import { readdir } from 'fs/promises';
 import { basename as _basename, join } from 'path';
 import Sequelize, { DataTypes } from 'sequelize';
 const basename = _basename(__filename);
-const db = {};
+const models = {};
 
 const sequelize = new Sequelize('sqlite::memory:');
 
-readdirSync(__dirname)
-  .filter(file => {
+export async function initModels () {
+  const files = await readdir(__dirname);
+  await Promise.all(files.filter(file => {
     return (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js');
-  })
-  .forEach(file => {
-    const model = require(join(__dirname, file))(sequelize, DataTypes);
-    db[model.name] = model;
+  }).map(async file => {
+    const model = (await import(join(__dirname, file))).default(sequelize, DataTypes);
+    models[model.name] = model;
+  }));
+
+  Object.keys(models).forEach(modelName => {
+    if (models[modelName].associate) {
+      models[modelName].associate(models);
+    }
   });
 
-Object.keys(db).forEach(modelName => {
-  if (db[modelName].associate) {
-    db[modelName].associate(db);
-  }
-});
+  return sequelize;
+}
+export { sequelize };
+export { Sequelize };
 
-db.sequelize = sequelize;
-db.Sequelize = Sequelize;
-
-export default db;
+export default models;
