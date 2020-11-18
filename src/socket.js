@@ -7,7 +7,7 @@ export default function (io) {
     if (user) {
       socket.join(user.id);
 
-      socket.on('sendMessage', async ({ to, message }) => {
+      socket.on('addMessage', async ({ to, message }) => {
         await models.Message.create({
           fromId: user.id,
           toId: to,
