@@ -1,5 +1,10 @@
+import { socketPassportVerify } from './passport/jwt';
+
 export default function (io) {
-  io.on('connection', (socket) => {
-    console.log('socket connected');
+  io.use(socketPassportVerify).on('connection', (socket) => {
+    const user = socket.handshake.user;
+    if (user) {
+      socket.join(user.nickname);
+    }
   });
 }

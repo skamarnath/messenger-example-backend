@@ -1,14 +1,15 @@
 'use strict';
 
 import { readdir } from 'fs/promises';
-import { basename as _basename, join } from 'path';
+import { basename as _basename, join, resolve } from 'path';
 import Sequelize, { DataTypes } from 'sequelize';
 const basename = _basename(__filename);
 const models = {};
 
-const sequelize = new Sequelize('sqlite::memory:');
+let sequelize;
 
 export async function initModels () {
+  sequelize = new Sequelize((await import(resolve('db/config.js'))).development);
   const files = await readdir(__dirname);
   await Promise.all(files.filter(file => {
     return (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js');

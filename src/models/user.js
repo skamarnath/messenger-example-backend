@@ -1,18 +1,32 @@
-'use strict';
-const {
-  Model
-} = require('sequelize');
-module.exports = (sequelize, DataTypes) => {
+import { Model } from 'sequelize';
+import bcrypt from 'bcrypt';
+import { payloadToJWT } from '../helpers/jwt';
+
+export default (sequelize, DataTypes) => {
   class User extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
+    async authenticate (password) {
+      return await bcrypt.compare(password, this.passwordDigest);
+    };
+
+    generateJWT () {
+      return payloadToJWT({
+        userId: this.id
+      });
+    };
+
     static associate (models) {
-      // define association here
+      User.hasMany(models.Message, {
+        foreignKey: 'fromId',
+        as: 'sentMessages'
+      });
+
+      User.hasMany(models.Message, {
+        foreignKey: 'toId',
+        as: 'receivedMessages'
+      });
     }
   };
+
   User.init({
     nickname: {
       type: DataTypes.STRING,
@@ -25,7 +39,13 @@ module.exports = (sequelize, DataTypes) => {
     }
   }, {
     sequelize,
-    modelName: 'User'
+    modelName: 'User',
+    hooks: {
+      async beforeCreate (user, o) {
+        user.passwordDigest = await bcrypt.hash(user.passwordDigest, 10);
+      }
+    }
   });
+
   return User;
 };

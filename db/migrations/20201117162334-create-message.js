@@ -10,15 +10,17 @@ module.exports = {
       },
       fromId: {
         type: Sequelize.INTEGER,
+        allowNull: false,
         references: {
-          tableName: 'Users',
+          model: 'Users',
           key: 'id'
         }
       },
       toId: {
         type: Sequelize.INTEGER,
+        allowNull: false,
         references: {
-          tableName: 'Users',
+          model: 'Users',
           key: 'id'
         }
       },

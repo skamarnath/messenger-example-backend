@@ -10,6 +10,7 @@ import socketIO from 'socket.io';
 import { initModels } from './models';
 import indexRouter from './routes/index';
 import setupSocket from './socket';
+import passport from './passport';
 
 const debug = _debug('backend:server');
 
@@ -17,7 +18,14 @@ const app = express();
 
 const server = createServer(app);
 
-const io = socketIO(server);
+const io = socketIO(server, {
+  cors: {
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    preflightContinue: false,
+    optionsSuccessStatus: 204
+  }
+});
 
 export default function () {
   /**
@@ -95,13 +103,15 @@ export default function () {
       app.use(urlencoded({ extended: false }));
 
       try {
-        await (await initModels()).sync();
+        // await (await initModels()).sync();
+        await initModels();
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error(e);
       }
 
       setupSocket(io);
+      passport.init(app);
 
       app.use('/', indexRouter);
     },
